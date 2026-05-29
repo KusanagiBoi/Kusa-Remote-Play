@@ -1,0 +1,9 @@
+{
+    "python-envs.defaultEnvManager": "ms-python.python:system"
+}
+
+{
+    "python.analysis.extraPaths": [
+        "/home/kusanagiboi/.local/lib/python3.14/site-packages"
+    ]
+}
