@@ -47,6 +47,13 @@ class InputReceiver:
                 try:
                     event = json.loads(data.decode('utf-8'))
                     
+                    # Interceptare Handshake
+                    if event.get('type') == 'handshake':
+                        print(f"[InputReceiver] Handshake primit de la {addr}. Trimit confirmare.")
+                        raspuns = json.dumps({"status": "ok"}).encode('utf-8')
+                        self.sock.sendto(raspuns, addr)
+                        continue
+                    
                     tip = event['type']
                     cod = event['code']
                     valoare = event['value']
@@ -68,6 +75,8 @@ class InputReceiver:
                     self.ui.syn()
                     
                 except json.JSONDecodeError:
+                    pass
+                except KeyError:
                     pass
         except KeyboardInterrupt:
             # Prindem Ctrl+C ca sa stim cand iesim curat din sesiune

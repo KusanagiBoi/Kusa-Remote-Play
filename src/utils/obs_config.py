@@ -1,19 +1,17 @@
 import json
+import configparser
 from pathlib import Path
 
 def force_enable_obs_websocket():
     print("[Setup] Forteaza activarea serverului de WebSocket in OBS...")
     
-    # Calea specifica pentru OBS-ul din Flatpak (Bazzite)
     config_dir = Path.home() / ".var/app/com.obsproject.Studio/config/obs-studio"
     plugin_config_dir = config_dir / "plugin_config" / "obs-websocket"
     config_json_path = plugin_config_dir / "config.json"
     
-    # Ne asiguram ca structura de foldere exista
     if not plugin_config_dir.exists():
         plugin_config_dir.mkdir(parents=True, exist_ok=True)
         
-    # Setarile standard: activat, port 4455, fara parola pentru teste locale
     config_data = {
         "server_enabled": True,
         "server_port": 4455,
@@ -21,7 +19,6 @@ def force_enable_obs_websocket():
     }
     
     try:
-        # Daca fisierul exista deja, il citim si doar suprascriem flag-urile esentiale
         if config_json_path.exists():
             with open(config_json_path, 'r') as f:
                 data = json.load(f)
@@ -29,10 +26,44 @@ def force_enable_obs_websocket():
                 data["auth_required"] = False
                 config_data = data
                 
-        # Salvam setarile inapoi
         with open(config_json_path, 'w') as f:
             json.dump(config_data, f, indent=4)
             
-        print("[Setup] WebSocket activat cu succes. OBS-ul o sa citeasca flag-ul la pornire.")
+        print("[Setup] WebSocket activat cu succes.")
     except Exception as e:
-        print(f"[Eroare] Nu am putut modifica fisierul de config al OBS-ului: {e}")
+        print(f"[Eroare] Nu am putut modifica config-ul WebSocket: {e}")
+
+def force_configure_obs_stream(target_ip, target_port, latency):
+    print(f"[Setup] Configurez OBS pentru SRT catre {target_ip}:{target_port} cu latenta {latency}ms...")
+    
+    config_dir = Path.home() / ".var/app/com.obsproject.Studio/config/obs-studio"
+    global_ini_path = config_dir / "global.ini"
+    profile_name = "Untitled" 
+    
+    if global_ini_path.exists():
+        config = configparser.ConfigParser()
+        config.read(global_ini_path)
+        if 'Basic' in config and 'ProfileDir' in config['Basic']:
+            profile_name = config['Basic']['ProfileDir']
+            
+    service_json_path = config_dir / "basic" / "profiles" / profile_name / "service.json"
+    
+    # Construim URL-ul dinamic in functie de ce primeste functia
+    srt_url = f"srt://{target_ip}:{target_port}?mode=caller&latency={latency}"
+    
+    service_data = {
+        "settings": {
+            "server": srt_url,
+            "key": "" 
+        },
+        "type": "rtmp_custom" 
+    }
+    
+    service_json_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    try:
+        with open(service_json_path, 'w') as f:
+            json.dump(service_data, f, indent=4)
+        print(f"[Setup] Stream configurat pe SRT (URL: {srt_url}) in profilul '{profile_name}'.")
+    except Exception as e:
+        print(f"[Eroare] Nu am putut modifica service.json: {e}")
