@@ -1,6 +1,6 @@
 import subprocess
 import platform
-from env_spawn import spawn
+from src.utils.env_spawn import spawn
 
 spwn = spawn()
 
@@ -24,7 +24,7 @@ def check_OBS():
 
 def install_OBS():
     ensure_flathub()
-    print("Incep instalarea OBS Studio...")
+    print("[SETUP] OBS is not installed, installing via Flatpak...")
     result = subprocess.run(spwn + ["flatpak", "install", "--user", "-y", "flathub", "com.obsproject.Studio"])
     return result.returncode == 0
 
@@ -34,5 +34,3 @@ def check():
         return 1
     else:
         return 1
-    
-check()

@@ -26,7 +26,7 @@ class OBSManager:
             time.sleep(4) 
             return True
         except Exception as e:
-            print(f"[Eroare OBS] Nu am putut lansa procesul: {e}")
+            print(f"[Error] Failed to launch OBS: {e}")
             return False
 
     def connect(self):
@@ -45,20 +45,20 @@ class OBSManager:
                 print("[OBS Manager] Conexiune stabilita cu succes dupa auto-launch!")
                 return True
             except Exception as e2:
-                print(f"[Eroare OBS] Tot nu m-am putut conecta nici dupa auto-launch: {e2}")
+                print(f"[Error] Failed to connect to OBS even after auto-launch: {e2}")
                 return False
 
     def start_stream(self):
         if not self.client:
-            print("[Eroare OBS] Nu exista o conexiune activa. Apeleaza connect() intai.")
+            print("[Error] No active connection to OBS. Please call connect() first.")
             return False
             
         try:
             self.client.start_stream()
-            print("[OBS Manager] Comanda de Start Stream a fost trimisa!")
+            print("[OBS Manager] Start Stream command sent!")
             return True
         except Exception as e:
-            print(f"[Eroare OBS] Nu am putut porni stream-ul. E setat corect encoderul? Detalii: {e}")
+            print(f"[Error] Failed to start stream: {e}")
             return False
 
     def stop_stream(self):
@@ -67,13 +67,13 @@ class OBSManager:
             
         try:
             self.client.stop_stream()
-            print("[OBS Manager] Stream-ul a fost oprit.")
+            print("[OBS Manager] Stream stopped.")
             return True
         except Exception as e:
-            print(f"[Eroare OBS] Nu am putut opri stream-ul: {e}")
+            print(f"[Error] Failed to stop stream: {e}")
             return False
 
     def disconnect(self):
         if self.client:
             self.client = None
-            print("[OBS Manager] Conexiunea WebSocket a fost inchisa.")
+            print("[OBS Manager] Connection closed.")

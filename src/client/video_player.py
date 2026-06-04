@@ -6,7 +6,7 @@ SRT_URL = "srt://0.0.0.0:8888?mode=listener"
 
 def receive_stream():
     decoder = get_best_h264_decoder()
-    print(f"[Video] Folosesc decodorul: {decoder}")
+    print(f"[Video] Using decoder: {decoder}")
     
     cmd_gstreamer = [
         "gst-launch-1.0",
@@ -23,11 +23,11 @@ def receive_stream():
         player = subprocess.Popen(cmd_gstreamer)
         player.wait()
     except KeyboardInterrupt:
-        print("\nOpresc stream-ul...")
+        print("\nStopping stream...")
         player.terminate()
         sys.exit(0)
     except FileNotFoundError:
-        print("Eroare: GStreamer lipseste. Asigura-te ca dependentele sunt instalate.")
+        print("Error: GStreamer is missing. Please ensure dependencies are installed.")
 
 if __name__ == "__main__":
     receive_stream()

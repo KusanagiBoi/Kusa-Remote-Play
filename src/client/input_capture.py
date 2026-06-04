@@ -5,64 +5,34 @@ import sys
 import glob
 import os
 
-def gaseste_controller_dinamic():
-    print("[*] Caut controllere in /dev/input/by-id/...")
-    device_uri = glob.glob('/dev/input/by-id/*-event-joystick')
+def find_gamepads():
+    print("[*] Searching gamepads in /dev/input/by-id/...")
+    devices = glob.glob('/dev/input/by-id/*-event-joystick')
     
-    if not device_uri:
+    if not devices:
         return None
         
-    cale_simbolica = device_uri[0]
-    cale_reala = os.path.realpath(cale_simbolica)
+    symlink = devices[0]
+    path = os.path.realpath(symlink)
     
-    print(f"[*] Am gasit symlink: {cale_simbolica}")
-    print(f"[*] Cale reala kernel: {cale_reala}")
+    print(f"[*] symlink: {symlink}")
+    print(f"[*] Real path: {path}")
     
-    return evdev.InputDevice(cale_reala)
-
-def verifica_conexiune_host(host_ip, port):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.settimeout(2.0)
-    
-    pachet_handshake = json.dumps({"type": "handshake"}).encode('utf-8')
-    
-    print(f"[*] Trimit handshake UDP catre {host_ip}:{port}...")
-    try:
-        sock.sendto(pachet_handshake, (host_ip, port))
-        
-        data, addr = sock.recvfrom(1024)
-        raspuns = json.loads(data.decode('utf-8'))
-        
-        if raspuns.get("status") == "ok":
-            print("[*] Handshake reusit. IP-ul este corect si host-ul asculta.")
-            sock.close()
-            return True
-            
-    except socket.timeout:
-        print("[Eroare] Timeout. IP-ul e gresit sau host-ul nu asculta pe portul specificat.")
-    except Exception as e:
-        print(f"[Eroare] Handshake esuat: {e}")
-        
-    sock.close()
-    return False
+    return evdev.InputDevice(path)
 
 def start_input_capture(target_ip, target_port=9999):
-    # Executam handshake-ul inainte sa ne mufam la controller
-    if not verifica_conexiune_host(target_ip, target_port):
-        print("[Client] Conexiunea a fost anulata din cauza erorii de IP/Handshake.")
-        return
 
     try:
-        gamepad = gaseste_controller_dinamic()
+        gamepad = find_gamepads()
         if not gamepad:
-            print("[Eroare] Nu gasesc niciun joystick conectat.")
+            print("[Error] No pads connected. Please connect a gamepad and try again.")
             return
     except PermissionError:
-        print("[Eroare] Permisiuni respinse pe /dev/input/. Ai uitat de sudo / reguli udev?")
+        print("[Error] Permission denied when trying to access the gamepad. Please run the script with appropriate permissions (e.g., using sudo) or adjust device permissions.")
         return
 
-    print(f"[*] M-am mufat cu succes la: {gamepad.name}")
-    print(f"[*] Trimit input catre {target_ip}:{target_port}...")
+    print(f"[*] Found gamepad: {gamepad.name}")
+    print(f"[*] Sending input to {target_ip}:{target_port}...")
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
@@ -76,4 +46,4 @@ def start_input_capture(target_ip, target_port=9999):
                 }
                 sock.sendto(json.dumps(data).encode('utf-8'), (target_ip, target_port))
     except KeyboardInterrupt:
-        print("\n[Client] Input capture oprit.")
+        print("\n[Client] Input capture stopped.")

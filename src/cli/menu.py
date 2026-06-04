@@ -1,6 +1,10 @@
 import os
 import sys
-
+from src.utils.arm import is_obs_host_supported
+from src.utils.dependecies import check
+from src.utils.obs_config import force_configure_obs_stream, force_enable_obs_websocket
+from src.client.video_player import receive_stream
+from src.client.input_capture import start_input_capture
 
 # Importi managerii cand ii ai gata
 # from src.host.obs_manager import OBSManager
@@ -21,22 +25,33 @@ def show_menu():
     print("====================================")
 
 def run_menu():
+    host_supported = is_obs_host_supported()
     while True:
         show_menu()
         option = input("Select an option: ").strip()
         
         if option == '1':
+            if not host_supported:
+                print("\n[!] Error: Hosting is not available on this architecture.")
+                input("Press ENTER to return to menu...")
+                continue
+                
+            # Restul logicii pentru HOST
             print("\n[Host] Stream Parameters:")
             target_ip = input("Client IP: ").strip()
             target_port = input("Client Port(default: 8888): ").strip()
             latency = input("Stream Latency (ms): ").strip()
             
             print(f"\n[Host] Initializing stream for {target_ip}:{target_port} with {latency} ms latency...")
-            # Aici apelezi:
+            check()  # Asiguram ca OBS e instalat, daca nu, il instalam
+            force_enable_obs_websocket()  # Activam WebSocket-ul (daca nu e deja)
+            force_configure_obs_stream(target_ip, target_port, latency)  # Configuram OBS pentru SRT catre client
+            # Aici ar trebui sa pornesti OBS-ul folosind
             # setup_obs_environment(target_ip, target_port, latency)
             # manager = OBSManager()
             # manager.start_obs_process()
             # ... samd
+
             input("\nPress ENTER to return to menu...")
             
         elif option == '2':
@@ -44,7 +59,8 @@ def run_menu():
             host_ip = input("HOST IP: ").strip()
             
             print(f"\n[Client] Connecting to {host_ip}...")
-            # Logica ta de client, ex: run_client(host_ip)
+            receive_stream()
+            start_input_capture(host_ip)
             input("\nPress ENTER to return to menu...")
             
         elif option == '0':

@@ -32,14 +32,14 @@ class InputReceiver:
     def start(self):
         try:
             self.ui = evdev.UInput(self.capacitati, name="Kusa-Remote-Pad", vendor=0x045e, product=0x028e)
-            print("[InputReceiver] Am creat controllerul virtual: Kusa-Remote-Pad")
+            print("[InputReceiver] Created virtual controller: Kusa-Remote-Pad")
         except evdev.uinput.UInputError as err:
-            print(f"[Eroare] Nu pot crea device-ul in kernel: {err}")
+            print(f"[Error] Could not create virtual controller: {err}")
             return
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.bind((self.ip, self.port))
-        print(f"[InputReceiver] Ascult input de la Pi pe UDP/{self.port}...")
+        print(f"[InputReceiver] Listening for input on UDP/{self.port}...")
 
         try:
             while True:
@@ -49,7 +49,7 @@ class InputReceiver:
                     
                     # Interceptare Handshake
                     if event.get('type') == 'handshake':
-                        print(f"[InputReceiver] Handshake primit de la {addr}. Trimit confirmare.")
+                        print(f"[InputReceiver] Handshake received from {addr}. Sending confirmation.")
                         raspuns = json.dumps({"status": "ok"}).encode('utf-8')
                         self.sock.sendto(raspuns, addr)
                         continue
@@ -80,7 +80,7 @@ class InputReceiver:
                     pass
         except KeyboardInterrupt:
             # Prindem Ctrl+C ca sa stim cand iesim curat din sesiune
-            print("\n[InputReceiver] Semnal de oprire primit.")
+            print("\n[InputReceiver] Input reception stopped.")
         finally:
             self.cleanup()
 
@@ -89,4 +89,4 @@ class InputReceiver:
             self.ui.close()
         if self.sock:
             self.sock.close()
-        print("[InputReceiver] Controller virtual distrus, port inchis.")
+        print("[InputReceiver] Resources cleaned up. Goodbye!")
