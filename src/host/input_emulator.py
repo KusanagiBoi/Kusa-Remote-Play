@@ -47,13 +47,6 @@ class InputReceiver:
                 try:
                     event = json.loads(data.decode('utf-8'))
                     
-                    # Interceptare Handshake
-                    if event.get('type') == 'handshake':
-                        print(f"[InputReceiver] Handshake received from {addr}. Sending confirmation.")
-                        raspuns = json.dumps({"status": "ok"}).encode('utf-8')
-                        self.sock.sendto(raspuns, addr)
-                        continue
-                    
                     tip = event['type']
                     cod = event['code']
                     valoare = event['value']
