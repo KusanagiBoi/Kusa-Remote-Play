@@ -1,8 +1,7 @@
 import obsws_python as obs
 import subprocess
 import time
-import os
-from src.utils.env_spawn import spawn  # Importam functia de adaptare la mediu
+from src.utils.env_spawn import spawn
 
 class OBSManager:
     def __init__(self, host="localhost", port=4455, password=""):
@@ -14,7 +13,6 @@ class OBSManager:
     def launch_obs(self):
         print("[OBS Manager] Starting OBS Studio...")
         try:
-            # Construim comanda adaptiva folosind functia ta
             base_cmd = ["flatpak", "run", "com.obsproject.Studio", "--minimize-to-tray"]
             adaptive_cmd = spawn() + base_cmd
             
@@ -23,7 +21,6 @@ class OBSManager:
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL
             )
-            # Ii dam 4 secunde sa isi incarce modulele si sa deschida portul pe retea
             time.sleep(4) 
             return True
         except Exception as e:
@@ -37,10 +34,9 @@ class OBSManager:
             print("[OBS Manager] Successfully connected to OBS!")
             return True
         except Exception:
-            print("[OBS Manager] OBS-ul nu raspunde. Il deschid automat acum...")
+            print("[OBS Manager] OBS is not responding. Auto-launching now...")
             self.launch_obs()
             
-            # A doua incercare de conectare, dupa ce am fortat pornirea
             try:
                 self.client = obs.ReqClient(host=self.host, port=self.port, password=self.password)
                 print("[OBS Manager] Successfully connected to OBS after auto-launch!")
@@ -81,41 +77,36 @@ class OBSManager:
 
     def setup_display_capture(self):
         if not self.client:
-            print("[Error] No active connection to OBS. Please call connect() first.")
+            print("[Error] No active connection to OBS.")
             return False
             
+        import time
+        import os
         
-        # Citim tipul sesiunii direct din variabilele de mediu ale Linux-ului
+        time.sleep(2)
+        
         session_type = os.environ.get("XDG_SESSION_TYPE", "").lower()
-        
-        if session_type == "wayland" or os.environ.get("WAYLAND_DISPLAY"):
-            capture_kind = "pipewire-desktop-capture-source"
-        else:
-            capture_kind = "xshm_input" # Fallback curat pentru X11
+        capture_kind = "pipewire-desktop-capture-source" if session_type == "wayland" else "xshm_input"
 
         try:
             resp = self.client.get_current_program_scene()
             scene_name = resp.current_program_scene_name
             
             items_resp = self.client.get_scene_item_list(scene_name)
-            source_name = "KusaAutoScreen"
-            
             for item in items_resp.scene_items:
-                if item['sourceName'] == source_name:
-                    print(f"[OBS Manager] Source '{source_name}' already exists. Skipping creation.")
+                if item['sourceName'] == "KusaAutoScreen":
                     return True
-                    
-            print(f"[OBS Manager] Adding ({capture_kind}) to scene '{scene_name}'...")
+            
             self.client.create_input(
                 scene_name,
-                source_name,
+                "KusaAutoScreen",
                 capture_kind, 
-                {}, 
+                {"capture_cursor": True}, 
                 True 
             )
-            print("[OBS Manager] Display capture source added successfully!")
+            print("[OBS Manager] Capture source added successfully!")
             return True
             
         except Exception as e:
-            print(f"[Error] Failed to add display capture source: {e}")
+            print(f"[Warning] Capture injection failed (plugin might not be ready yet): {e}")
             return False

@@ -9,7 +9,7 @@ class InputReceiver:
         self.ip = "0.0.0.0"
         self.ui = None
         self.sock = None
-        self.capacitati = {
+        self.capabilities = {
             e.EV_KEY: [
                 e.BTN_A, e.BTN_B, e.BTN_X, e.BTN_Y,
                 e.BTN_TL, e.BTN_TR, e.BTN_TL2, e.BTN_TR2,
@@ -31,7 +31,7 @@ class InputReceiver:
 
     def start(self):
         try:
-            self.ui = evdev.UInput(self.capacitati, name="Kusa-Remote-Pad", vendor=0x045e, product=0x028e)
+            self.ui = evdev.UInput(self.capabilities, name="Kusa-Remote-Pad", vendor=0x045e, product=0x028e)
             print("[InputReceiver] Created virtual controller: Kusa-Remote-Pad")
         except evdev.uinput.UInputError as err:
             print(f"[Error] Could not create virtual controller: {err}")
@@ -47,24 +47,23 @@ class InputReceiver:
                 try:
                     event = json.loads(data.decode('utf-8'))
                     
-                    tip = event['type']
-                    cod = event['code']
-                    valoare = event['value']
+                    evt_type = event['type']
+                    evt_code = event['code']
+                    evt_value = event['value']
 
-                    # TRANSLATION LAYER: D-PAD
-                    if tip == e.EV_ABS:
-                        if cod == e.ABS_HAT0X:
-                            self.ui.write(e.EV_KEY, e.BTN_DPAD_LEFT, 1 if valoare == -1 else 0)
-                            self.ui.write(e.EV_KEY, e.BTN_DPAD_RIGHT, 1 if valoare == 1 else 0)
+                    if evt_type == e.EV_ABS:
+                        if evt_code == e.ABS_HAT0X:
+                            self.ui.write(e.EV_KEY, e.BTN_DPAD_LEFT, 1 if evt_value == -1 else 0)
+                            self.ui.write(e.EV_KEY, e.BTN_DPAD_RIGHT, 1 if evt_value == 1 else 0)
                             self.ui.syn()
                             continue 
-                        elif cod == e.ABS_HAT0Y:
-                            self.ui.write(e.EV_KEY, e.BTN_DPAD_UP, 1 if valoare == -1 else 0)
-                            self.ui.write(e.EV_KEY, e.BTN_DPAD_DOWN, 1 if valoare == 1 else 0)
+                        elif evt_code == e.ABS_HAT0Y:
+                            self.ui.write(e.EV_KEY, e.BTN_DPAD_UP, 1 if evt_value == -1 else 0)
+                            self.ui.write(e.EV_KEY, e.BTN_DPAD_DOWN, 1 if evt_value == 1 else 0)
                             self.ui.syn()
                             continue
 
-                    self.ui.write(tip, cod, valoare)
+                    self.ui.write(evt_type, evt_code, evt_value)
                     self.ui.syn()
                     
                 except json.JSONDecodeError:
@@ -72,7 +71,6 @@ class InputReceiver:
                 except KeyError:
                     pass
         except KeyboardInterrupt:
-            # Prindem Ctrl+C ca sa stim cand iesim curat din sesiune
             print("\n[InputReceiver] Input reception stopped.")
         finally:
             self.cleanup()

@@ -28,6 +28,3 @@ def receive_stream():
         sys.exit(0)
     except FileNotFoundError:
         print("Error: GStreamer is missing. Please ensure dependencies are installed.")
-
-if __name__ == "__main__":
-    receive_stream()

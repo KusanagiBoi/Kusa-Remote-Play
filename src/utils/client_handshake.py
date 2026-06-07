@@ -7,21 +7,19 @@ def client_handshake(host_ip, port=9998):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(("0.0.0.0", port))
     
-    pachet_ack = json.dumps({"type": "ack"}).encode('utf-8')
+    ack_packet = json.dumps({"type": "ack"}).encode('utf-8')
     
     while True:
         try:
-            # Blocheaza executia la infinit pana primeste ceva
             data, addr = sock.recvfrom(1024)
             
-            # Filtram pachetele de zgomot, acceptam STRICT de la host_ip
             if addr[0] == host_ip:
-                mesaj = json.loads(data.decode('utf-8'))
+                message = json.loads(data.decode('utf-8'))
                 
-                if mesaj.get("type") == "sync":
+                if message.get("type") == "sync":
                     print(f"[Handshake] Sync packet received from {host_ip}. Sending ACK.")
-                    sock.sendto(pachet_ack, addr)
-                    break # Iesim din bucla, drumul e liber
+                    sock.sendto(ack_packet, addr)
+                    break 
                     
         except json.JSONDecodeError:
             pass

@@ -12,8 +12,8 @@ def ensure_flathub():
     )
 
 def check_OBS(): 
-    arhitectura = platform.machine().lower()
-    if arhitectura in ["x86_64", "amd64"]:
+    architecture = platform.machine().lower()
+    if architecture in ["x86_64", "amd64"]:
         result = subprocess.run(
             spwn + ["flatpak", "info", "com.obsproject.Studio"],
             stdout=subprocess.DEVNULL,

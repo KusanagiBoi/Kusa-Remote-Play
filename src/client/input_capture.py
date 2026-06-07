@@ -1,7 +1,6 @@
 import socket
 import json
 import evdev
-import sys
 import glob
 import os
 
@@ -21,7 +20,6 @@ def find_gamepads():
     return evdev.InputDevice(path)
 
 def start_input_capture(target_ip, target_port=9999):
-
     try:
         gamepad = find_gamepads()
         if not gamepad:

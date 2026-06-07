@@ -14,12 +14,15 @@ from src.host.input_emulator import InputReceiver
 def clear_screen():
     os.system('clear')
 
-def show_menu():
+def show_menu(host_supported):
     clear_screen()
     print("====================================")
     print("       KUSA REMOTE PLAY v1.0        ")
     print("====================================")
-    print("1. HOST")
+    if host_supported:
+        print("1. HOST")
+    else:
+        print("1. Hosting not available")
     print("2. JOIN")
     print("0. QUIT")
     print("====================================")
@@ -28,7 +31,7 @@ def run_menu():
     host_supported = is_obs_host_supported()
     
     while True:
-        show_menu()
+        show_menu(host_supported)
         option = input("Select an option: ").strip()
         
         if option == '1':
@@ -42,7 +45,6 @@ def run_menu():
             target_port = input("Client Port (default: 8888): ").strip()
             latency = input("Stream Latency (ms): ").strip()
             
-            # Fallback automat daca dai doar ENTER la port
             if not target_port:
                 target_port = "8888"
                 
@@ -60,13 +62,11 @@ def run_menu():
             obs.setup_display_capture()
             obs.start_stream()
             
-            print("\n[Host] Stream activ. Astept input de la client. (Apasa Ctrl+C pentru oprire)")
+            print("\n[Host] Stream active. Waiting for client input. (Press Ctrl+C to stop)")
             
-            # Executia se blocheaza aici pe thread-ul principal
             receptor.start() 
             
-            # Dupa ce dai Ctrl+C pe Host, iese din receptor.start() si ajunge aici
-            print("\n[Host] Opresc stream-ul...")
+            print("\n[Host] Stopping stream...")
             obs.stop_stream()
             obs.disconnect()   
 
@@ -77,21 +77,19 @@ def run_menu():
             host_ip = input("HOST IP: ").strip()
             
             if not host_ip:
-                print("[!] Eroare: Nu ai introdus un IP.")
+                print("\n[!] Error: No IP entered.")
                 input("Press ENTER to return to menu...")
                 continue
                 
             print(f"\n[Client] Connecting to {host_ip}...")
             client_handshake(host_ip)
             
-            print("[Client] Pornesc stream-ul video in fundal...")
-            # Thread separat pentru video ca sa nu blocheze terminalul
+            print("[Client] Starting video stream in background...")
             video_thread = threading.Thread(target=receive_stream)
             video_thread.daemon = True 
             video_thread.start()
             
-            print("[Client] Preluare input activa. (Apasa Ctrl+C pentru oprire)")
-            # Preluarea de input ramane pe firul principal ca sa o poti opri la tastatura
+            print("[Client] Input capture active. (Press Ctrl+C to stop)")
             start_input_capture(host_ip)
             
             input("\nPress ENTER to return to menu...")

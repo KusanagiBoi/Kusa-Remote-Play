@@ -1,6 +1,34 @@
 import json
 import configparser
+import subprocess
 from pathlib import Path
+
+def detect_gpu_encoder():
+    try:
+        result = subprocess.run(
+            ["lspci"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        output = result.stdout.lower()
+        
+        if "nvidia" in output:
+            print("[Hardware] NVIDIA GPU detected. Allocating NVENC encoder.")
+            return "jim_nvenc", None
+        elif "amd" in output or "radeon" in output:
+            print("[Hardware] AMD GPU detected. Allocating VAAPI encoder.")
+            return "ffmpeg_vaapi", "/dev/dri/renderD128"
+        elif "intel" in output:
+            print("[Hardware] Intel GPU detected. Allocating VAAPI encoder.")
+            return "ffmpeg_vaapi", "/dev/dri/renderD128"
+        else:
+            print("[Hardware] GPU unidentified. Fallback to x264 (Software).")
+            return "obs_x264", None
+            
+    except Exception as e:
+        print(f"[Error] Could not verify hardware components: {e}. Fallback to x264.")
+        return "obs_x264", None
 
 def force_enable_obs_websocket():
     print("[Setup] Forcing WebSocket activation in OBS...")
@@ -42,13 +70,12 @@ def force_configure_obs_stream(target_ip, target_port, latency):
     
     if global_ini_path.exists():
         config = configparser.ConfigParser()
+        config.optionxform = str 
         config.read(global_ini_path)
         if 'Basic' in config and 'ProfileDir' in config['Basic']:
             profile_name = config['Basic']['ProfileDir']
             
     service_json_path = config_dir / "basic" / "profiles" / profile_name / "service.json"
-    
-    # Construim URL-ul dinamic in functie de ce primeste functia
     srt_url = f"srt://{target_ip}:{target_port}?mode=caller&latency={latency}"
     
     service_data = {
@@ -67,3 +94,35 @@ def force_configure_obs_stream(target_ip, target_port, latency):
         print(f"[Setup] Configured SRT stream (URL: {srt_url}) in profile '{profile_name}'.")
     except Exception as e:
         print(f"[Error] Could not modify service.json: {e}")
+
+    basic_ini_path = config_dir / "basic" / "profiles" / profile_name / "basic.ini"
+    encoder_name, vaapi_device = detect_gpu_encoder()
+    
+    try:
+        cfg = configparser.ConfigParser()
+        cfg.optionxform = str
+        
+        if basic_ini_path.exists():
+            cfg.read(basic_ini_path)
+            
+        if 'Output' not in cfg:
+            cfg['Output'] = {}
+        cfg['Output']['Mode'] = 'Advanced'
+        
+        if 'AdvOut' not in cfg:
+            cfg['AdvOut'] = {}
+            
+        cfg['AdvOut']['Encoder'] = encoder_name
+        cfg['AdvOut']['RecEncoder'] = encoder_name
+        
+        if vaapi_device:
+            cfg['AdvOut']['VaapiDevice'] = vaapi_device
+        elif 'VaapiDevice' in cfg['AdvOut']:
+            del cfg['AdvOut']['VaapiDevice']
+            
+        with open(basic_ini_path, 'w') as f:
+            cfg.write(f)
+            
+        print(f"[Setup] Configured OBS to use {encoder_name} encoder.")
+    except Exception as e:
+        print(f"[Error] Could not force hardware encoder in basic.ini: {e}")
