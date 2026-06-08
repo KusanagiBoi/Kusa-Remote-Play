@@ -1,5 +1,19 @@
-# Host related junk
-
-# Server related junk
-
-# Client related junk
+__pycache__/
+*.py[cod]
+*$py.class
+.flatpak-builder/
+build-dir/
+repo/
+*.flatpak
+venv/
+.venv/
+env/
+.vscode/
+.idea/
+.DS_Store
+build-dir/
+.flatpak-builder/
+*.flatpak
+*.img
+~/flatpak_mount/
+__pycache__/

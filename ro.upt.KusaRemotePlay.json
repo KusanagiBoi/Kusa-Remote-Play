@@ -1,0 +1,76 @@
+{
+    "app-id": "ro.upt.KusaRemotePlay",
+    "runtime": "org.freedesktop.Platform",
+    "runtime-version": "23.08",
+    "sdk": "org.freedesktop.Sdk",
+    "command": "kusa-remote-play",
+    "finish-args": [
+        "--share=network",
+        "--share=ipc",
+        "--socket=wayland",
+        "--socket=fallback-x11",
+        "--device=dri",
+        "--device=all",
+        "--filesystem=~/.var/app/com.obsproject.Studio:rw",
+        "--talk-name=org.freedesktop.Flatpak"
+    ],
+    "build-options": {
+        "build-args": [
+            "--share=network"
+        ]
+    },
+    "modules": [
+        {
+            "name": "libsrt",
+            "buildsystem": "cmake-ninja",
+            "config-opts": [
+                "-DENABLE_SHARED=ON",
+                "-DENABLE_STATIC=OFF",
+                "-DENABLE_ENCRYPTION=OFF",
+                "-DENABLE_APPS=OFF"
+            ],
+            "sources": [
+                {
+                    "type": "git",
+                    "url": "https://github.com/Haivision/srt.git",
+                    "branch": "v1.5.3"
+                }
+            ]
+        },
+        {
+            "name": "gst-plugins-bad-srt",
+            "buildsystem": "meson",
+            "config-opts": [
+                "-Dauto_features=disabled",
+                "-Dsrt=enabled"
+            ],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://gstreamer.freedesktop.org/src/gst-plugins-bad/gst-plugins-bad-1.22.0.tar.xz",
+                    "sha256": "3c9d9300f5f4fb3e3d36009379d1fb6d9ecd79c1a135df742b8a68417dd663a1"
+                }
+            ]
+        },
+        {
+            "name": "kusa-remote-play",
+            "buildsystem": "simple",
+            "build-commands": [
+                "pip3 install --prefix=/app -r requirements.txt",
+                "mkdir -p /app/KusaRemotePlay",
+                "cp -r src main.py README.md /app/KusaRemotePlay/",
+                "mkdir -p /app/bin",
+                "echo '#!/bin/bash' > /app/bin/kusa-remote-play",
+                "echo 'export PYTHONPATH=$(ls -d /app/lib/python*/site-packages | head -n 1)' >> /app/bin/kusa-remote-play",
+                "echo 'python3 /app/KusaRemotePlay/main.py' >> /app/bin/kusa-remote-play",
+                "chmod +x /app/bin/kusa-remote-play"
+            ],
+            "sources": [
+                {
+                    "type": "dir",
+                    "path": "."
+                }
+            ]
+        }
+    ]
+}
