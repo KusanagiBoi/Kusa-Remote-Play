@@ -38,10 +38,10 @@ To install the application using the pre-compiled deployment package, follow the
 2. Extract the ZIP archive. It contains the installer script (`install.sh`) and the Flatpak bundles for both `x86_64` and `aarch64` architectures.
 3. Open a terminal inside the extracted directory and execute the installation script:
 
-\`\`\`bash
+```bash
 chmod +x install.sh
 ./install.sh
-\`\`\`
+```
 
 *Note: The script automatically detects your hardware architecture via `uname -m`, checks for the Flatpak runtime presence, and provisions the correct bundle (`_x86_64` or `_aarch64`) locally.*
 
@@ -49,9 +49,9 @@ chmod +x install.sh
 
 Once the installation script completes successfully, launch the application using:
 
-\`\`\`bash
+```bash
 flatpak run ro.upt.KusaRemotePlay
-\`\`\`
+```
 
 ---
 
@@ -60,15 +60,15 @@ flatpak run ro.upt.KusaRemotePlay
 If you want to modify the source code or recompile the sandbox environment manually, use the following commands:
 
 1. Compile the modules and application layer defined in the manifest:
-\`\`\`bash
+```bash
 flatpak run org.flatpak.Builder --user --install --force-clean build-dir ro.upt.KusaRemotePlay.json
-\`\`\`
+```
 
 2. Export the build directory and package it into a single-file bundle:
-\`\`\`bash
+```bash
 flatpak build-export repo build-dir
 flatpak build-bundle repo KusaRemotePlay_$(uname -m).flatpak ro.upt.KusaRemotePlay
-\`\`\`
+```
 
 ---
 
